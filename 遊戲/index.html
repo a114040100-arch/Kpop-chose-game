@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-pop 靈魂團體測驗</title>
+    <style>
+        :root {
+            --primary: #ff75a0;
+            --secondary: #81ecec;
+            --bg: #f8f9fa;
+        }
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #fce4ec 0%, #e1f5fe 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .quiz-container {
+            background: white;
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+        h1 { color: #444; font-size: 22px; margin-bottom: 20px; }
+        .progress { font-size: 14px; color: #888; margin-bottom: 10px; }
+        .question {
+            font-size: 20px; font-weight: bold; margin-bottom: 30px; color: #333;
+            min-height: 60px; display: flex; align-items: center; justify-content: center;
+        }
+        .options { display: flex; flex-direction: column; gap: 15px; }
+        button.option-btn {
+            background: white; border: 2px solid #eee; padding: 15px 20px;
+            border-radius: 15px; cursor: pointer; font-size: 16px; transition: all 0.3s;
+            text-align: left;
+        }
+        button.option-btn:hover { border-color: var(--primary); background: #fff5f8; transform: translateY(-2px); }
+        
+        #result-page { display: none; }
+        .result-img {
+            width: 100%; height: 300px; border-radius: 20px;
+            object-fit: cover; margin: 20px 0; border: 4px solid #fff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .result-group { font-size: 32px; font-weight: bold; color: var(--primary); margin: 10px 0; }
+        .result-desc { font-size: 15px; color: #666; line-height: 1.6; margin-bottom: 5px; }
+        .restart-btn {
+            margin-top: 20px; background: var(--primary); color: white; border: none;
+            padding: 12px 30px; border-radius: 50px; cursor: pointer; font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div id="quiz-page">
+        <div class="progress">問題 <span id="current-idx">1</span> / 6</div>
+        <div id="question-text" class="question">載入中...</div>
+        <div class="options">
+            <button class="option-btn" onclick="selectOption('A')" id="optA"></button>
+            <button class="option-btn" onclick="selectOption('B')" id="optB"></button>
+        </div>
+    </div>
+
+    <div id="result-page">
+        <h1 id="category-title">測驗結果</h1>
+        <img class="result-img" id="result-img" src="" alt="結果圖片">
+        <div class="result-group" id="result-group"></div>
+        <p class="result-desc" id="result-long-desc"></p>
+        <button class="restart-btn" onclick="location.reload()">重新測驗</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { q: "你更嚮往哪種生活？", a: "熱血冒險、舞台發光", b: "平凡日常、小確幸" },
+        { q: "你的穿搭比較偏？", a: "有造型感、酷、前衛", b: "簡單舒服、自然清新" },
+        { q: "音樂喜好？", a: "節奏強烈、很有力量", b: "輕快或夢幻、耐聽" },
+        { q: "如果拍MV你想當？", a: "故事主角（有世界觀、劇情）", b: "日常主角（戀愛/友情/生活）" },
+        { q: "別人會怎麼形容你？", a: "有個性、有距離感", b: "親切、好相處" },
+        { q: "你更喜歡哪種感覺？", a: "神秘、高級、未來感", b: "溫暖、可愛、真實感" }
+    ];
+
+    // 結果資料庫
+    const resultsData = {
+        highA: [
+            { name: "ATEEZ", img: "images/ateez.jpg", desc: "強烈舞台酷感型：妳天生注定要在聚光燈下閃耀！追求極致的音樂力量。" },
+            { name: "aespa", img: "images/aespa.jpg", desc: "強烈舞台酷感型：追求未來感與獨一無二的風格，舞台就是妳的世界。" },
+            { name: "XG", img: "images/xg.jpg", desc: "強烈舞台酷感型：充滿個性且前衛，不隨波逐流的姿態最迷人。" }
+        ],
+        midA: [
+            { name: "TXT", img: "images/txt.jpg", desc: "有故事與變化的靈魂：妳喜歡夢幻且有深度的世界觀，感性且豐富。" },
+            { name: "Red Velvet", img: "images/rv.jpg", desc: "有故事與變化的靈魂：在藝術與大眾之間找到完美平衡，充滿神秘吸引力。" }
+        ],
+        highB: [
+            { name: "BOYNEXTDOOR", img: "images/bnd.jpg", desc: "日常系親近感甜心：妳讓人感到放鬆與自然，生活的小確幸就是最美的風景。" },
+            { name: "ILLIT", img: "images/illit.jpg", desc: "日常系親近感甜心：溫暖且可愛，擁有讓人想要親近的純真魅力。" },
+            { name: "GOT7", img: "images/got7.jpg", desc: "日常系親近感甜心：親切、好相處且充滿真實感，大家都喜歡圍繞著妳。" }
+        ]
+    };
+
+    let currentQuestion = 0;
+    let scoreA = 0;
+
+    function loadQuestion() {
+        const q = questions[currentQuestion];
+        document.getElementById('current-idx').innerText = currentQuestion + 1;
+        document.getElementById('question-text').innerText = q.q;
+        document.getElementById('optA').innerText = "A. " + q.a;
+        document.getElementById('optB').innerText = "B. " + q.b;
+    }
+
+    function selectOption(choice) {
+        if (choice === 'A') scoreA++;
+        currentQuestion++;
+        if (currentQuestion < questions.length) {
+            loadQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        document.getElementById('quiz-page').style.display = 'none';
+        document.getElementById('result-page').style.display = 'block';
+
+        let selectedCategory;
+        if (scoreA >= 5) {
+            selectedCategory = resultsData.highA;
+        } else if (scoreA >= 3) {
+            selectedCategory = resultsData.midA;
+        } else {
+            selectedCategory = resultsData.highB;
+        }
+
+        // 從分類中隨機選一個團體
+        const result = selectedCategory[Math.floor(Math.random() * selectedCategory.length)];
+
+        // 更新畫面
+        document.getElementById('result-group').innerText = result.name;
+        document.getElementById('result-img').src = result.img;
+        document.getElementById('result-long-desc').innerText = result.desc;
+        document.getElementById('category-title').innerText = "妳的風格 A 共有 " + scoreA + " 題";
+        
+        // 錯誤檢查
+        document.getElementById('result-img').onerror = function() {
+            alert("找不到圖片檔案：" + result.img + "\n請確認 images 資料夾內是否有這張圖，且檔名正確。");
+        };
+    }
+
+    loadQuestion();
+</script>
+
+</body>
+</html>
